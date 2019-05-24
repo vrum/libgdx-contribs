@@ -3,7 +3,7 @@ A lightweight, GLES2-only library to ease development and inclusion of post-proc
 
 ## Usage
 
-It's usually simple to add post-processing effects to your own application but, depending on the complexity of your rendering stage and the rendering states you are using, you may be required to track state changes in some cases (see how the Bloom effect [saves](https://github.com/manuelbua/libgdx-contribs/blob/master/postprocessing/src/com/bitfire/postprocessing/effects/Bloom.java#L226-228) and [restores](https://github.com/manuelbua/libgdx-contribs/blob/master/postprocessing/src/com/bitfire/postprocessing/effects/Bloom.java#L243) the OpenGL blending state).
+It's usually simple to add post-processing effects to your own application but, depending on the complexity of your rendering stage and the rendering states you are using, you may be required to track state changes in some cases (see how the Bloom effect [saves](https://github.com/manuelbua/libgdx-contribs/blob/master/postprocessing/src/com/bitfire/postprocessing/effects/Bloom.java#L221) and [restores](https://github.com/manuelbua/libgdx-contribs/blob/master/postprocessing/src/com/bitfire/postprocessing/effects/Bloom.java#L235-237) the OpenGL blending state).
 
 ## Basic example
 Suppose you want to add a *bloom* effect to your libgdx application and that the following is your original source code (this is just an example, it will not compile!):
@@ -65,6 +65,8 @@ Then, the first thing we are going to create is an instance of the *PostProcesso
 ```
 
 Basically, we are using the *PostProcessor* default constructor to create a color buffer with the same size as the one of your application screen, this is where the original scene will be rendered to, so that the effects will be able to access a full-resolution copy of the scene: next, since we are not going to use the depth buffer nor alpha/blending, we specify false for both of these flags and finally, we use 32 bits-per-pixel precision only on the desktop.
+
+The default constructor will assume the viewport size to be the same as your window: should you require a custom viewport, you can specify one either in the overloaded constructor or by invoking the *setViewport* method.
 
 Then we are creating a *Bloom* effect instance: this object will create an internal buffer for storing intermediate image computations and here we are specifying the pixel dimensions of this internal buffer to be &frac14; of the original application size. This size choice has a double effect: *it's beneficial to the performance*, since the kernel filter will run on a lot less pixels, *and the result will be much smoother*, since the bundled Blur *filter* is going to exploit the hardware bilinear filtering capabilities by using some specially pre-computed weights and offsets, taken from a binomial distribution, that will play nice with texture lookups (*i wrote a tool to generate those magic numbers so i may push it to the repo whenever i'll get the time to clean it up :*).
 
@@ -128,5 +130,14 @@ Easy, uh? Just one more note: in case you didn't want to have your UI post-proce
 
 ## Known issues
 
-Probably quite a few bugs live in there :)  
+* **Error: Java.Lang.NoClassDefFoundError: com.bitfire.utils.ShaderLoader. (Android)**
+* **More obscure Dex-related errors (Android)**
+
+Thanks to CatalystNZ for figuring this out.
+It looks like the fix is pretty simple: one should track dependency usage in the projects and the projects it depends on, and carefully avoid to have both projects reference the same source.
+
+So referencing *gdx.jar* is enough and **DO NOT** link any gdx source in the contribs project (else, reference the sources and DO NOT use the .jar files anywhere).
+
+## Notes
+Probably quite a few other bugs live in there :)
 Please [report them](https://github.com/manuelbua/libgdx-contribs/issues) on github!
